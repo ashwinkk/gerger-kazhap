@@ -8,6 +8,7 @@ window.onload = function () {
 
 	var submitButton = document.getElementById('submit');
 	var resultsContainer = document.getElementById('stage');
+	var errorSpan = document.getElementById('error-dump');
 
 	submitButton.addEventListener('click', function () {
 
@@ -17,6 +18,7 @@ window.onload = function () {
 		allInputs = {};
 
 		resultsContainer.innerHTML = '';
+		errorSpan.innerHTML = '';
 
 		var expressionTextArea = document.getElementById('expressions');
 
@@ -26,7 +28,7 @@ window.onload = function () {
 
 		expressionsArray.forEach(function (expression) {
 			var expressionParserArray = expression.split('=');
-			var variable = expressionParserArray[0];
+			var variable = expressionParserArray[0].trim();
 			var expressionCondition = expressionParserArray[1];
 			
 			updateExpressionAndDependencies(variable, expressionCondition);
@@ -56,7 +58,7 @@ window.onload = function () {
 
 
 	function updateExpressionAndDependencies(variable, expressions) {
-		var regexpressionArray = [...expressions.matchAll(/([A-Za-z]+)?(?:([-+])([A-Za-z]))/g)];
+		var regexpressionArray = [...expressions.matchAll(/\ *([A-Za-z]+)?\ *(?:([-+])\ *([A-Za-z]))\ */g)];
 
 		allVariables[variable] = 0;
 		console.log(regexpressionArray);
@@ -77,7 +79,12 @@ window.onload = function () {
 	}
 
 	function populateVariableDependency (dependency, vble) {
-		
+
+		if (variables[dependency] && variables[dependency].includes(vble)) {
+			showError('Invalid expression');
+			throw new Error('invalid expression');
+		}
+
 		if (variables[vble])
 			!variables[vble].includes(dependency) && variables[vble].push(dependency);
 		else
@@ -120,8 +127,8 @@ window.onload = function () {
 			var updatedValue = calculateExpression(dependency);
 			allVariables[dependency] = updatedValue;
 			allInputs[dependency].value = updatedValue;
-
-			updateCalculations(dependency);
+			if (dependency != variable)
+				updateCalculations(dependency);
 		});
 	}
 
@@ -148,5 +155,9 @@ window.onload = function () {
 
 	function getInputValue (inputElement) {
 		return parseInt(inputElement.value) || 0;
+	}
+
+	function showError (message) {
+		errorSpan.innerHTML = message;
 	}
 }
